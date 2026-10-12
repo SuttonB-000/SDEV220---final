@@ -1,21 +1,23 @@
 import tkinter as tk
 from datetime import datetime
-from tkinter import messagebox, ttk
+from tkinter import messagebox
+import ttkbootstrap as ttk
 from class_data import Inventory, coffee, donuts
 
 LOW_STOCK_THRESHOLD = 5
 
 #window start
-window = tk.Tk()
+window = ttk.Window(themename="minty-dark")
 window.title('Coffee Shop Inventory')
-window.geometry('700x650')
+window.geometry('760x700')
+window.minsize(680, 620)
 
 # window label
-title_label = tk.Label(window, text='Coffee Shop Inventory', font=('Arial', 24))
+title_label = ttk.Label(window, text='Coffee Shop Inventory', font=('Arial', 24, 'bold'))
 title_label.pack(pady=20)
 
 table_filter = tk.StringVar(value="All Products")
-filter_frame = ttk.Frame(window)
+filter_frame = ttk.Frame(window, padding=(16, 8))
 filter_frame.pack(pady=(0, 5))
 ttk.Label(filter_frame, text="Show:").pack(side="left", padx=(0, 5))
 table_filter_selector = ttk.Combobox(
@@ -49,6 +51,10 @@ inventory_table.column("unit", width=90, anchor="center")
 inventory_table.column("best_by", width=120, anchor="center")
 
 inventory_table.pack(fill="x", padx=20, pady=(0, 15))
+style = ttk.Style()
+style.configure("Treeview", rowheight=30, font=("Arial", 11))
+style.configure("Treeview.Heading", font=("Arial", 10, "bold"))
+inventory_table.tag_configure("low_stock", foreground="#ff8a80")
 
 #test objects
 house_blend = coffee(
@@ -105,16 +111,16 @@ inventory.add_product(decaf_blend)
 inventory.add_product(chocolate_donut)
 inventory.add_product(blueberry_donut)
 
-low_stock_label = tk.Label(window, text="", fg="red")
+low_stock_label = ttk.Label(window, text="", bootstyle="danger")
 low_stock_label.pack(pady=5)
 
-status_label = tk.Label(window, text="")
+status_label = ttk.Label(window, text="", bootstyle="secondary")
 status_label.pack(pady=5)
 
 # product selector and quantity entry
 selected_product = tk.StringVar(value='House Blend')
 
-input_frame = ttk.Frame(window)
+input_frame = ttk.Frame(window, padding=12)
 input_frame.pack(pady=10)
 
 ttk.Label(input_frame, text='Select a product:').grid(
@@ -134,12 +140,7 @@ ttk.Label(input_frame, text='Quantity to add or remove:').grid(
     row=1, column=0, sticky='w', padx=(0, 8), pady=5
 )
 
-quantity_entry = tk.Entry(
-    input_frame,
-    background="white",
-    fg="black",
-    width=25,
-)
+quantity_entry = ttk.Entry(input_frame, width=25)
 quantity_entry.grid(row=1, column=1, sticky='w', pady=5)
 
 # Validate the selected product and quantity.
@@ -239,6 +240,7 @@ def refresh_inventory_table(event=None):
         if table_filter.get() == "Donuts" and product_type != "Donut":
             continue
 
+        tags = ("low_stock",) if product.getQty() <= LOW_STOCK_THRESHOLD else ()
         inventory_table.insert(
             "",
             "end",
@@ -249,13 +251,14 @@ def refresh_inventory_table(event=None):
                 unit,
                 format_best_by(product.bestby),
             ),
+            tags=tags,
         )
 
 
 def open_add_product_form():
-    form = tk.Toplevel(window)
+    form = ttk.Toplevel(window)
     form.title("Add Product")
-    form.geometry("320x390")
+    form.geometry("380x430")
     form.transient(window)
 
     product_type = tk.StringVar(value="Coffee")
@@ -341,7 +344,7 @@ def open_add_product_form():
         status_label.config(text=f"Added new product: {product.name}.")
         form.destroy()
 
-    ttk.Button(form, text="Save Product", command=save_product).grid(
+    ttk.Button(form, text="Save Product", command=save_product, bootstyle="success").grid(
         row=5, column=0, columnspan=2, pady=12
     )
 
@@ -352,8 +355,10 @@ refresh_stock_labels()
 refresh_inventory_table()
 
 # gui buttons for the above logic
-tk.Button(window, text='Add Stock', command=add_stock).pack(pady=5)
-tk.Button(window, text='Remove Stock', command=remove_stock).pack(pady=5)
-tk.Button(window, text='Add Product', command=open_add_product_form).pack(pady=5)
+action_frame = ttk.Frame(window, padding=(12, 4))
+action_frame.pack()
+ttk.Button(action_frame, text='Add Stock', command=add_stock, bootstyle="success").pack(side="left", padx=5)
+ttk.Button(action_frame, text='Remove Stock', command=remove_stock, bootstyle="danger outline").pack(side="left", padx=5)
+ttk.Button(action_frame, text='Add Product', command=open_add_product_form, bootstyle="primary").pack(side="left", padx=5)
 
 window.mainloop()
